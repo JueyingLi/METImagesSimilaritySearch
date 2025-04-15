@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Met Image Search</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Met Museum Image Search</h1>
+
+        <div class="search-section">
+            <h2>Search by Text</h2>
+            <input type="text" id="searchText" placeholder="e.g., knight, armor, painting..." />
+            <button onclick="searchByText()">Search</button>
+        </div>
+
+        <div class="search-section">
+            <h2>Search by Image</h2>
+            <input type="file" id="imageFile" accept="image/*" onchange="previewImage()" />
+            <img id="previewImage" style="display:none; max-width: 100%; margin-bottom: 1rem; border-radius: 6px;" />
+            <button onclick="searchByImage()">Upload & Search</button>
+        </div>
+
+        <div id="results">
+            <h2>Results</h2>
+            <div id="imageResults"></div>
+        </div>
+    </div>
+
+    <script>
+        async function searchByText() {
+            const query = document.getElementById("searchText").value;
+            const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            displayResults(data.results);
+        }
+
+        async function searchByImage() {
+            const fileInput = document.getElementById("imageFile");
+            const formData = new FormData();
+            formData.append("image_file", fileInput.files[0]);
+
+            const res = await fetch("/search_image", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            displayResults(data.results);
+        }
+
+        function previewImage() {
+            const fileInput = document.getElementById("imageFile");
+            const preview = document.getElementById("previewImage");
+
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById("imageResults");
+            container.innerHTML = "";
+            results.forEach(url => {
+                const img = document.createElement("img");
+                img.src = url;
+                img.alt = "Result Image";
+                img.className = "result-image";
+                container.appendChild(img);
+            });
+        }
+    </script>
+</body>
+</html>
